@@ -73,17 +73,6 @@
     {
       "studentid": "s1086104",
       "roomid": "5F785633",
-      "sequence": 1,
-      "type": "選擇題",
-      "submit_time": "2020-06-28T13:49:49.272Z",
-      "answer_option_index": 1,
-      "answer_text": null,
-      "answer_draw": "s1086104_5F785633_1",
-      "get_point": null
-    },
-    {
-      "studentid": "s1086104",
-      "roomid": "5F785633",
       "sequence": 2,
       "type": "畫圖作答",
       "submit_time": "2020-06-28T13:50:03.087Z",

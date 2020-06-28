@@ -243,7 +243,7 @@
             <div v-show="assign.type == '選擇題'" class="mb-5" style="font-size:24px;margin-left:120px">
                 <div v-for="(option, index) in assign.options" class="mx-2">
                     <input :id="option" type="radio" v-model="answer_option_index" :value="index" style="cursor:pointer">
-                    <label :for="option" style="cursor:pointer;padding-left:15px">{{option}}</label>
+                    <label :for="option" style="cursor:pointer;padding-left:10px">({{String.fromCharCode(index+65)}})&nbsp;&nbsp;{{option}}</label>
                 </div>
             </div>   
 
@@ -293,8 +293,35 @@
     </script>
 
     <script type="text/x-template" id="component-revise">
-        <div>
-
+        <div class="container">
+            <div class="row">
+                <div class="col-12 card shadow-sm border p-4 mb-4" v-for="(value, propertyName, index) in submitlist">
+                    <h4 class="card-title border-bottom" style="cursor:pointer;">
+                        {{ propertyName }}
+                    </h4>
+                    <div v-for="item in value">
+                        <div class="bg-light p-2"> 題目{{ item.sequence }}. {{ item.content }}
+                            <br>
+                            <span class="mr-2" v-for="(opt,index) in item.options">
+                                ({{String.fromCharCode(index+65)}}) {{opt}}
+                            </span>
+                        </div>
+                        <div class="p-2">
+                            <div>回答：</div>
+                            <div v-if="item.type=='選擇題'">
+                                <span class="font-weight-bold" style="font-size:22px;">{{String.fromCharCode(item.answer_option_index+65)}}</span>
+                            </div>
+                            <div v-if="item.type=='簡答題'">
+                                <span>{{item.answer_text}}</span>
+                            </div>
+                            <div v-if="item.type=='畫圖作答'" class="text-left">
+                                <img :src="'/database/images/' + item.answer_draw + '.png'" alt="" class="border shadow-sm" style="width:400px">
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
         </div>
     </script>
 
@@ -472,8 +499,8 @@
                     },
                     dataType: "json",
                     success: function (res) {
-                        that.submitlist = res;
                         console.log(res)
+                        that.submitlist = res;
                     },
                     error: function (xhr, status, error) {
                         console.log(error)

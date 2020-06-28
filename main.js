@@ -131,12 +131,21 @@ app.get('/submitlist', function (req, res) {
     var list = db.get('submits').filter({
             roomid: roomid
         }).sortBy('studentid')
+        .groupBy('studentid')
         .value();
 
     for (var i in list) {
-        list[i].answer_draw = req.protocol + '://' + req.headers.host + '/database/images/' + list[i].answer_draw;
+        for (var j in list[i]) {
+            var anss = db.get('assigns').find({
+                roomid: roomid,
+                sequence: list[i][j].sequence
+            }).value();
+            
+            list[i][j].content = anss.content;
+            list[i][j].options = anss.options;
+        }
     }
-
+    console.log(list)
     res.json(list || null);
 })
 
