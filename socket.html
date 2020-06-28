@@ -1,0 +1,682 @@
+<html>
+
+<head>
+    <title>Socket</title>
+
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css">
+
+    <style>
+        * {
+            font-family: sans-serif;
+        }
+
+        #settings {
+            display: block;
+            text-align: center;
+        }
+
+        #paint {
+            background: #ffffff;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+
+        input[type="radio"] {
+            -ms-transform: scale(1.8);
+            /* IE 9 */
+            -webkit-transform: scale(1.8);
+            /* Chrome, Safari, Opera */
+            transform: scale(1.8);
+            margin-right: 10px !important;
+        }
+
+        .btn,
+        input,
+        textarea,
+        .card {
+            border-radius: 0 !important;
+        }
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/vue-router@3.3.4/dist/vue-router.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+    </script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
+    </script>
+   
+</head>
+
+<body>
+    <div id="app" class="p-4">
+        <div
+            class="d-flex justify-content-between text-center container alert bg-dark text-white border border-white shadow mt-2 mb-0 rounded-0">
+            房間代號：{{RoomID == ''? '（未加入）': RoomID}}
+            <span class="text-white">建立者：{{Creator}}</span>
+        </div>
+        <div class="p-2 container">
+
+            <router-link to="/" class="btn btn-dark">加入房間</router-link>
+            <router-link to="/home" class="btn btn-dark">題目列表</router-link>
+            <router-link to="/assign" class="btn btn-dark">指派題目</router-link>
+            <router-link to="/revise" class="btn btn-dark">批改</router-link>
+        </div>
+        <router-view></router-view>
+
+
+        <!-- Flexbox container for aligning the toasts -->
+        <div class="" style="position: fixed; bottom:0; left:50%; transform: translateX(-50%);min-width: 350px;">
+            <div role="alert" aria-live="assertive" aria-atomic="true" class="toast" data-autohide="false">
+                <div class="toast-header">
+                    <strong class="mr-auto pr-5" style="font-size: 26px;color:darkblue;">訊息通知</strong>
+                    <small>1分鐘前</small>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body p-4" style="font-size: 18px;" v-html="NotiyMsg">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <script type="text/x-template" id="component-join">
+        <div>
+
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="text-center card p-4 mt-5 border border-dark shadow" style="width:400px;">
+                     <h3 class="font-weight-bold text-dark p-3"><i class="fas fa-laptop-house"></i> 加入房間</h3>
+                     <div class="form-group">
+                         <input type="text" v-model="studentID" placeholder="學號 (Student ID)" class="p-3" style="font-size:18px">
+                     </div>
+                     <div class="form-group">
+                         <input type="text" v-model="joinID" placeholder="房間代號 (Code)" class="p-3" style="font-size:18px">
+                     </div>
+                     <div class="text-danger">
+                         {{error}}
+                     </div>
+                     <div class="form-group mt-4">
+                         <button type="button" v-on:click="join" class="btn btn-dark px-5">加入房間</button>
+                     </div>
+                    
+                     <div class="form-group">
+                         <button type="button" v-on:click="newroom" class="btn btn-primary px-5">建立房間</button>
+                     </div>
+                </div>
+             </div>
+     
+             <!-- Modal -->
+             <div class="modal fade" id="newroommodal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                 <div class="modal-dialog">
+                 <div class="modal-content">
+                     <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">建立新房間</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" v-model="creatorName" placeholder="建立人" class="p-3 w-100" style="font-size:18px">
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" v-on:click="newroomConfirm()">建立</button>
+                     </div>
+                 </div>
+                 </div>
+             </div>
+
+
+        </div>
+        
+      </script>
+
+
+
+    <script type="text/x-template" id="component-home">
+        <div class="container">
+            <table class="table table-dark">
+                <thead>
+                  <tr>
+                    <th scope="col">#題號</th>
+                    <th scope="col">題型</th>
+                    <th scope="col">題目</th>
+                    <th scope="col">配分</th>
+                    <th scope="col" class="text-center">作答</th>
+                    <th scope="col" style="width:90px">已繳交</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in list">
+                    <th scope="row">{{item.sequence}}</th>
+                    <td>{{item.type}}</td>
+                    <td>{{item.content.substring(0, 10)}} ...</td>
+                    <td>{{item.point}}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-light btn-sm" v-on:click="startAnswer(item.sequence)">開始作答</button>
+                    </td>
+                    <td><span v-if="item.submited"><i class="fas fa-check"></i></span></td>
+                  </tr>
+                  
+                </tbody>
+              </table>
+
+            
+            <input type="text" v-model="message" placeholder="問題反映">
+            <button type="button" v-on:click="sendMessage">傳送資料</button>
+        </div>
+    </script>
+
+
+    <script type="text/x-template" id="component-assign">
+        <div class="container">
+            <div class="card">
+                <div class="card-body">
+
+                  <div class="my-2 font-weight-bold">題目種類</div>
+                  <div>
+                      <label class="radio-inline mr-2">
+                        <input type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1">選擇題
+                      </label>
+                      <label class="radio-inline mr-2">
+                        <input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2">簡答題
+                      </label>
+                      <label class="radio-inline mr-2">
+                        <input type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option3">畫圖作答
+                      </label>
+                  </div>
+
+                  <div class="my-2 font-weight-bold">問題描述</div>
+                  <div class="py-2">
+                    <textarea name="" id="" rows="3" class="w-100 border border-dark p-2"></textarea>
+                  </div>
+
+                  <div class="my-2 font-weight-bold">得分</div>
+                  <div class="checkbox">
+                    <label>
+                        <input type="text" class="form-control" placeholder="獲得分數">
+                    </label>
+                  </div>   
+
+                  <div class="my-2 font-weight-bold">答案選項</div>
+                  <div class="px-4">
+                      <div><input type="text" class="form-control my-2" placeholder="選項A"> </div>
+                      <div><input type="text" class="form-control my-2" placeholder="選項B"> </div>
+                      <div><input type="text" class="form-control my-2" placeholder="選項C"> </div>
+                      <div><input type="text" class="form-control my-2" placeholder="選項D"> </div>
+
+                      <div class="text-right mt-3">
+                        <button type="button" class="btn bg-primary text-white py-1 px-3">增加選項</button> 
+                      </div>
+                  </div>
+                 
+                  <div class="my-4">
+                    <button type="button" v-on:click="add_quest" class="btn btn-outline-secondary"><i class="fas fa-plus"></i> 新增題目</button>
+                  </div>
+                 
+                </div>
+
+            </div>
+          
+        </div>
+    </script>
+
+    <script type="text/x-template" id="component-answer">
+        <div class="container"> 
+            <div class="mt-4" style="font-size: 24px; margin-bottom: 50px">
+                <span class="bg-info text-white p-3 rounded-circle mr-4">題目{{assign.sequence}}</span> {{assign.content}}
+            </div> 
+          
+            <div v-show="assign.type == '選擇題'" class="mb-5" style="font-size:24px;margin-left:120px">
+                <div v-for="(option, index) in assign.options" class="mx-2">
+                    <input :id="option" type="radio" v-model="answer_option_index" :value="index" style="cursor:pointer">
+                    <label :for="option" style="cursor:pointer;padding-left:15px">{{option}}</label>
+                </div>
+            </div>   
+
+            <div v-show="assign.type == '簡答題'" class="mb-5" style="font-size:24px;margin-left:120px">
+                <div class="mx-2">
+                    <textarea class="w-100 p-3" v-model="answer_text" cols="30" rows="5"></textarea>
+                    
+                </div>
+            </div>   
+
+            <div v-show="assign.type == '畫圖作答'">
+                <div id="sketch" ref="sketch">
+                    <canvas id="paint" ref="paint" class="border shadow-sm"></canvas>
+                </div>
+                
+                <div id="settings" class="my-3">
+                    <div class="mb-2 font-weight-bold">更改顏色</div>
+                    <button class="btn btn-primary btn-sm" v-on:click="getColor('blue');">{{ color == 'blue'? "✓ ":"" }}藍筆</button>
+                    <button class="btn btn-danger btn-sm" v-on:click="getColor('red');">{{ color == 'red'? "✓ ":"" }}紅筆</button>
+                    <button class="btn btn-success btn-sm" v-on:click="getColor('green');">{{ color == 'green'? "✓ ":"" }}綠筆</button>
+                    <button class="btn btn-secondary btn-sm" v-on:click="getColor('black');">{{ color == 'black'? "✓ ":"" }}黑筆</button>
+    
+                    <button class="btn btn-outline-secondary btn-sm" v-on:click="getColor('white');">{{ color == 'white'? "✓ ":"" }}橡皮擦</button>
+                </div>
+                
+                <div id="settings"> 
+                    <div class="mb-2 font-weight-bold">粗細</div>
+                    <button class="btn border btn-sm" v-on:click="getSize('2');">{{ size == 2? "✓ ":"" }}細</button>
+                    <button class="btn border btn-sm" v-on:click="getSize('5');">{{ size == 5? "✓ ":"" }}一般</button>
+                    <button class="btn border btn-sm" v-on:click="getSize('10');">{{ size == 10? "✓ ":"" }}粗</button>
+                    <button class="btn border btn-sm" v-on:click="getSize('20');">{{ size == 20? "✓ ":"" }}最粗</button>
+                </div>
+            </div>
+            
+
+            <hr/>
+            <div class="text-center">
+                <h5 class="text-center mb-4">分數 {{assign.point}}</h5>
+                <button type="button" class="btn btn-dark btn-lg px-5" v-on:click="submitAnswer">繳交答案</button>
+
+                
+            </div>
+            <div class="text-center">
+                <router-link to="/home" class="btn btn-outline-secondary px-5 mt-4">回上頁</router-link>
+            </div>
+        </div>
+    </script>
+
+    <script type="text/x-template" id="component-revise">
+        <div>
+
+        </div>
+    </script>
+
+    <script>
+        // globals var
+        var socket = io.connect();
+
+
+        // 1. Define route components.
+        var join = Vue.component("component-join", {
+            template: '#component-join',
+            data() {
+                return {
+                    studentID: '',
+                    joinID: '',
+                    error: '',
+                    creatorName: '',
+                    newRoomID: '',
+                }
+            },
+            methods: {
+                join: function () {
+                    var that = this;
+                    if (that.studentID == '') {
+                        that.error = "請輸入學號"
+                        return;
+                    }
+                    $.ajax({
+                        url: window.origin + '/join',
+                        type: "post",
+                        data: JSON.stringify({
+                            "studentid": that.studentID,
+                            "roomid": that.joinID,
+                        }),
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: "json",
+                        success: function (res) {
+
+                            if (res.success) {
+                                app.RoomID = res.id;
+                                app.Creator = res.creator;
+                                app.StudentId = that.studentID;
+                                app.Role = 'Participants';
+
+                                that.$router.push('/home');
+                            } else {
+                                that.error = '查無此房間代號。';
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.log(error)
+                        }
+                    });
+
+
+                },
+                newroom: function () {
+                    $('#newroommodal').modal();
+
+                },
+                newroomConfirm: function () {
+                    var that = this;
+                    if (that.creatorName == '') {
+                        return;
+                    }
+                    $.ajax({
+                        url: window.origin + '/newroom',
+                        type: "post",
+                        data: JSON.stringify({
+                            "creator": that.creatorName,
+                        }),
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: "json",
+                        success: function (res) {
+                            if (res.success) {
+                                app.RoomID = res.id;
+                                app.NotiyMsg =
+                                    `建立房間成功，房間代號(Code)：<span class="text-success" style="font-size:30px;">${res.id}</span>`;
+                                app.Creator = res.creator;
+                                app.Role = 'Owner';
+
+                                $('.toast').toast('show');
+                                that.$router.push('/home');
+                            } else {
+                                alert('error');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.log(error)
+                        }
+                    });
+
+                }
+            },
+        });
+
+
+        var Home = Vue.component("component-home", {
+            template: '#component-home',
+            data() {
+                return {
+                    list: [],
+                    message: ''
+                }
+            },
+            methods: {
+                sendMessage: function () {
+                    var that = this;
+                    socket.emit('client_data', {
+                        'letter': that.message
+                    });
+                },
+                startAnswer: function (seq) {
+                    this.$router.push('/answer?seq=' + seq);
+                }
+            },
+            mounted() {
+                var that = this;
+                socket.on('message', function (data) {
+                    that.list.push(data);
+                });
+
+                $.ajax({
+                    url: window.origin + '/assigns',
+                    type: "get",
+                    data: {
+                        roomid: that.$parent.RoomID,
+                        studentid: that.$parent.StudentId,
+                    },
+                    dataType: "json",
+                    success: function (res) {
+                        that.list = res;
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(error)
+                    }
+                });
+            }
+        });
+
+
+
+        var Assign = Vue.component("component-assign", {
+            template: '#component-assign',
+            data() {
+                return {
+
+                }
+            },
+            methods: {
+                assign: function () {
+
+                },
+                add_quest: function () {
+
+                }
+            },
+        });
+
+        var Revise = Vue.component("component-revise", {
+            template: '#component-revise',
+            data() {
+                return {
+                    submitlist: []
+                }
+            },
+            methods: {},
+            mounted(){
+                var that = this;
+                $.ajax({
+                    url: window.origin + '/submitlist',
+                    type: "get",
+                    data: {
+                        roomid: that.$parent.RoomID
+                    },
+                    dataType: "json",
+                    success: function (res) {
+                        that.submitlist = res;
+                        console.log(res)
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(error)
+                    }
+                })
+            }
+        });
+
+        var Answer = Vue.component("component-answer", {
+            template: '#component-answer',
+            data() {
+                return {
+                    canvas: null,
+                    ctx: null,
+                    size: 2,
+                    color: 'red',
+                    assign: {},
+                    answer_option_index: null,
+                    answer_text: null,
+                    answer_draw: null
+                }
+            },
+            methods: {
+                getColor: function (colour) {
+                    this.ctx.strokeStyle = colour;
+                    this.color = colour;
+                },
+                getSize: function (size) {
+                    this.ctx.lineWidth = size;
+                    this.size = size;
+                },
+                initCanvas: function () {
+                    this.canvas = this.$refs['paint'];
+                    this.ctx = this.canvas.getContext('2d');
+
+                    var canvas = this.canvas;
+                    var ctx = this.ctx;
+
+                    var sketch = this.$refs['sketch'];
+                    var sketch_style = getComputedStyle(sketch);
+                    canvas.width = 800;
+                    canvas.height = 350;
+
+                    var mouse = {
+                        x: 0,
+                        y: 0
+                    };
+
+                    /* Mouse Capturing Work */
+                    canvas.addEventListener('mousemove', function (e) {
+                        mouse.x = e.pageX - this.offsetLeft;
+                        mouse.y = e.pageY - this.offsetTop;
+                    }, false);
+
+                    /* Drawing on Paint App */
+                    ctx.lineJoin = 'round';
+                    ctx.lineCap = 'round';
+                    ctx.strokeStyle = "red";
+
+                    canvas.addEventListener('mousedown', function (e) {
+                        ctx.beginPath();
+                        ctx.moveTo(mouse.x, mouse.y);
+
+                        canvas.addEventListener('mousemove', onPaint, false);
+                    }, false);
+
+                    canvas.addEventListener('mouseup', function () {
+                        canvas.removeEventListener('mousemove', onPaint, false);
+                    }, false);
+
+                    var onPaint = function () {
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    };
+                },
+                submitAnswer: function () {
+                    var that = this;
+                    var imgBase64 = '';
+                    switch (this.assign.type) {
+                        case "選擇題":
+                            break;
+                        case "簡答題":
+                            break;
+                        case "畫圖作答":
+                            imgBase64 = that.canvas.toDataURL();
+                            break;
+                    }
+                    $.ajax({
+                        url: window.origin + '/submitanswer',
+                        type: "post",
+                        data: JSON.stringify({
+                            "studentid": app.StudentId,
+                            "roomid": app.RoomID,
+                            "sequence": that.assign.sequence,
+                            "type": that.assign.type,
+                            "answer_option_index": that.answer_option_index,
+                            "answer_text": that.answer_text,
+                            "answer_draw": imgBase64
+                        }),
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: "json",
+                        success: function (res) {
+                            if (res.success) {
+                                app.NotiyMsg = `題目${that.assign.sequence} 繳交成功。`;
+                                $('.toast').toast('show');
+                                that.$router.push('/home');
+                            } else {
+                                alert('error');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+
+                        }
+                    })
+                }
+            },
+            mounted() {
+                var that = this;
+
+                this.initCanvas();
+
+                $.ajax({
+                    url: window.origin + '/assignBySeq',
+                    type: "get",
+                    data: {
+                        sequence: that.$route.query.seq,
+                        roomid: that.$parent.RoomID
+                    },
+                    dataType: "json",
+                    success: function (res) {
+                        that.assign = res;
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(error)
+                    }
+                })
+            }
+        });
+
+        // 2. Define some routes
+        // Each route should map to a component. The "component" can
+        // either be an actual component constructor created via
+        // `Vue.extend()`, or just a component options object.
+        // We'll talk about nested routes later.
+        const routes = [{
+                path: '/',
+                component: join
+            },
+            {
+                path: '/home',
+                components: {
+                    default: Home
+                }
+            },
+            {
+                path: '/assign',
+                components: {
+                    default: Assign
+                }
+            },
+            {
+                path: '/revise',
+                components: {
+                    default: Revise
+                }
+            },
+            {
+                path: '/answer',
+                components: {
+                    default: Answer
+                }
+            }
+        ]
+
+        // 3. Create the router instance and pass the `routes` option
+        // You can pass in additional options here, but let's
+        // keep it simple for now.
+        const router = new VueRouter({
+            routes // short for `routes: routes`
+        })
+
+        // 4. Create and mount the root instance.
+        // Make sure to inject the router with the router option to make the
+        // whole app router-aware.
+        const app = new Vue({
+            router,
+            data() {
+                return {
+                    RoomID: '5F785633',
+                    Creator: '',
+                    NotiyMsg: '',
+                    StudentId: 's1086106',
+                    Role: '', // Participants or Owner
+                }
+            },
+            mounted() {},
+            watch: {
+                $route(to, from) {
+
+                }
+            }
+        }).$mount('#app');
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "nodejs-socket-quiz",
+  "version": "1.0.0",
+  "description": "Socket文字冒險遊戲",
+  "main": "game.js",
+  "scripts": {
+    "start": "node game.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "msit11125",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "lowdb": "^1.0.0",
+    "socket.io": "^2.3.0"
+  }
+}
