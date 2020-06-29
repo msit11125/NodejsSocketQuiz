@@ -7,7 +7,7 @@ var express = require('express'),
 
 
 const {
-    uuid
+    uuid, deepCopy
 } = require('./functions');
 // ---------------------------- lowdb ----------------------------
 const low = require('lowdb');
@@ -39,185 +39,248 @@ app.get(/(.*)\.(jpg|gif|png|ico|css|js|txt)/i, function (req, res) {
 var onlineCount = 0;
 
 // ---------------------------- APIs ----------------------------
-app.post('/join', function (req, res) {
-    var roomid = req.body.roomid;
-    var stuid = req.body.studentid;
-    var find = db.get('rooms').find({
-        id: roomid
-    }).value();
-
-    var result = {
-        success: false,
-        id: '',
-        creator: ''
-    }
-
-    if (find) {
-        if (find.stulist.indexOf(stuid) == -1) {
-            find.stulist.push(stuid);
-        }
-
-        db.get('rooms').find({
-                id: roomid
-            }).assign(find)
-            .write();
-
-        result.success = true;
-        result.id = find.id;
-        result.creator = find.creator;
-    }
-    res.json(result);
-});
-
-app.post('/newroom', function (req, res) {
-    var creator = req.body.creator;
-    var roomid = uuid().substring(0, 8).toUpperCase();
-
-    db.get('rooms')
-        .push({
-            id: roomid,
-            stulist: [],
-            creator: creator,
-            create_time: new Date()
-        })
-        .write();
-
-    res.json({
-        success: true,
-        id: roomid,
-        creator: creator
-    });
-});
-
-app.get('/assigns', function (req, res) {
-    var roomid = req.query.roomid;
-    var studentid = req.query.studentid;
-
-    var assigns = db.get('assigns').filter({
-        roomid: roomid
-    }).value();
-
-    var submits = db.get('submits').filter({
-        studentid: studentid,
-        roomid: roomid
-    }).value();
-
-    // 檢查繳交
-    for (var i in assigns) {
-        let ass = assigns[i];
-        let hadSubmit = submits.some(s => s.sequence == ass.sequence);
-        ass.submited = hadSubmit || false;
-    }
-
-
-    res.json(assigns || []);
-});
-
-app.get('/assignBySeq', function (req, res) {
-    var roomid = req.query.roomid;
-    var sequence = req.query.sequence;
-
-    var assign = db.get('assigns').find({
-        sequence: parseInt(sequence),
-        roomid: roomid
-    }).value();
-
-
-    res.json(assign || null);
-});
-
-app.get('/submitlist', function (req, res) {
-    var roomid = req.query.roomid;
-    var list = db.get('submits').filter({
-            roomid: roomid
-        }).sortBy('studentid')
-        .groupBy('studentid')
-        .value();
-
-    for (var i in list) {
-        for (var j in list[i]) {
-            var anss = db.get('assigns').find({
-                roomid: roomid,
-                sequence: list[i][j].sequence
-            }).value();
-            
-            list[i][j].content = anss.content;
-            list[i][j].options = anss.options;
-        }
-    }
-    console.log(list)
-    res.json(list || null);
-})
-
-app.post('/submitanswer', function (req, res) {
-    var studentid = req.body.studentid;
-    var roomid = req.body.roomid;
-    var sequence = req.body.sequence;
-    var type = req.body.type;
-    var submit_time = new Date();
-    var answer_option_index = req.body.answer_option_index; // 由 0 開始算
-    var answer_text = req.body.answer_text;
-    var answer_draw = `${studentid}_${roomid}_${sequence}`;
-
-    if (type == '畫圖作答') {
-        var base64Data = req.body.answer_draw.replace(/^data:image\/png;base64,/, "");
-
-        require("fs").writeFile(`database/images/${studentid}_${roomid}_${sequence}.png`, base64Data, 'base64', function (err) {
-            console.log(err);
-        });
-    }
-
-    var exist = db.get('submits').find({
-        studentid: studentid,
-        roomid: roomid,
-        sequence: sequence
-    }).value();
-
-
-    var insert = {
-        "studentid": studentid,
-        "roomid": roomid,
-        "sequence": sequence,
-        "type": type,
-        "submit_time": submit_time,
-        "answer_option_index": answer_option_index,
-        "answer_text": answer_text,
-        "answer_draw": answer_draw,
-        "get_point": null
-    };
-
-
-    if (exist) {
-        db.get('submits').find({
-                studentid: studentid,
-                roomid: roomid,
-                sequence: sequence
-            })
-            .assign(insert)
-            .write();
-    } else {
-        db.get('submits')
-            .push(insert)
-            .write();
-    }
-
-    res.json({
-        success: true
-    });
-});
 
 io.sockets.on('connection', function (socket) {
     // 上線人數
     onlineCount++;
 
-    // 接收來自於瀏覽器的資料
-    socket.on('client_data', function (data) {
-        process.stdout.write(data.letter + ' '); // 不換行
+    app.post('/join', function (req, res) {
+        var roomid = req.body.roomid;
+        var stuid = req.body.studentid;
+        var find = db.get('rooms').find({
+            id: roomid
+        }).value();
 
-        socket.broadcast.emit('message', {
-            'date': new Date(),
-            'message': data.letter
+        var result = {
+            success: false,
+            id: '',
+            creator: '',
+            role: ''
+        }
+
+        if (find) {
+            if (find.stulist.indexOf(stuid) == -1) {
+                find.stulist.push(stuid);
+            }
+
+            db.get('rooms').find({
+                id: roomid
+            }).assign(find)
+                .write();
+
+            result.success = true;
+            result.id = find.id;
+            result.creator = find.creator;
+            result.room_name = find.room_name;
+            result.role = find.creator == stuid ? '老師': '學生';
+        }
+        res.json(result);
+    });
+
+    app.post('/newroom', function (req, res) {
+        var creator = req.body.creator;
+        var room_name = req.body.room_name;
+        var roomid = uuid().substring(0, 8).toUpperCase();
+
+        db.get('rooms')
+            .push({
+                id: roomid,
+                room_name: room_name,
+                stulist: [],
+                creator: creator,
+                create_time: new Date()
+            })
+            .write();
+
+        res.json({
+            success: true,
+            id: roomid,
+            room_name: room_name,
+            creator: creator
         });
+    });
+
+
+    app.get('/assigns', function (req, res) {
+        var roomid = req.query.roomid;
+        var studentid = req.query.studentid;
+        
+        var assigns = db.get('assigns').filter({
+            roomid: roomid
+        }).value();
+
+        if(studentid){
+            var submits = db.get('submits').filter({
+                studentid: studentid,
+                roomid: roomid
+            }).value();
+    
+            assigns = deepCopy(assigns);
+            submits = deepCopy(submits);
+            // 檢查繳交
+            for (var i in assigns) {
+                let ass = assigns[i];
+                let hadSubmit = submits.some(s => s.sequence == ass.sequence);
+                ass.submited = hadSubmit || false;
+    
+                let find = submits.find(s => s.sequence == ass.sequence);
+                ass.had_revise = find ? find.had_revise : false;
+                ass.get_point = find ? find.get_point : null;
+            }
+        }
+        
+        res.json(assigns || []);
+    });
+
+    app.post('/newassigns', function(req, res){
+        console.log(req.body)
+        res.json({
+            success: true
+        });
+    });
+
+    app.get('/assignBySeq', function (req, res) {
+        var roomid = req.query.roomid;
+        var sequence = req.query.sequence;
+        var studentid = req.query.studentid;
+
+        var assign = db.get('assigns').find({
+            sequence: parseInt(sequence),
+            roomid: roomid
+        }).value();
+
+        var submits = db.get('submits').find({
+            studentid: studentid,
+            sequence: parseInt(sequence),
+            roomid: roomid
+        }).value();
+
+        assign = deepCopy(assign);
+        if (submits) {
+            assign.answer_option_index = submits.answer_option_index;
+            assign.answer_text = submits.answer_text;
+            assign.answer_draw = submits.answer_draw;
+            assign.had_revise = submits.had_revise;
+            assign.get_point = submits.get_point;
+            assign.suggestion = submits.suggestion;
+        }
+        res.json(assign || null);
+    });
+
+    app.get('/submitlist', function (req, res) {
+        var roomid = req.query.roomid;
+        var list = db.get('submits').filter({
+            roomid: roomid
+        }).sortBy(['studentid', 'sequence'])
+            .groupBy('studentid')
+            .value();
+
+        list = deepCopy(list);
+
+        for (var i in list) {
+            for (var j in list[i]) {
+                var anss = db.get('assigns').find({
+                    roomid: roomid,
+                    sequence: list[i][j].sequence
+                }).value();
+
+                list[i][j].content = anss.content;
+                list[i][j].options = anss.options;
+            }
+        }
+
+        res.json(list || null);
+    })
+
+    app.post('/submitanswer', function (req, res) {
+        var studentid = req.body.studentid;
+        var roomid = req.body.roomid;
+        var sequence = req.body.sequence;
+        var type = req.body.type;
+        var submit_time = new Date();
+        var answer_option_index = req.body.answer_option_index; // 由 0 開始算
+        var answer_text = req.body.answer_text;
+        var answer_draw = '';
+
+        if (type == '畫圖作答') {
+            answer_draw = `${studentid}_${roomid}_${sequence}`;
+            var base64Data = req.body.answer_draw.replace(/^data:image\/png;base64,/, "");
+
+            require("fs").writeFile(`database/images/${studentid}_${roomid}_${sequence}.png`, base64Data, 'base64', function (err) {
+                console.log(err);
+            });
+        }
+
+        var exist = db.get('submits').find({
+            studentid: studentid,
+            roomid: roomid,
+            sequence: sequence
+        }).value();
+
+
+        var insert = {
+            "studentid": studentid,
+            "roomid": roomid,
+            "sequence": sequence,
+            "type": type,
+            "submit_time": submit_time,
+            "answer_option_index": answer_option_index,
+            "answer_text": answer_text,
+            "answer_draw": answer_draw,
+            "get_point": null
+        };
+
+
+        if (exist) {
+            db.get('submits').find({
+                studentid: studentid,
+                roomid: roomid,
+                sequence: sequence
+            })
+                .assign(insert)
+                .write();
+        } else {
+            db.get('submits')
+                .push(insert)
+                .write();
+        }
+
+        res.json({
+            success: true
+        });
+    });
+
+    app.post('/revise', function (req, res) {
+        var studentid = req.body.studentid;
+        var roomid = req.body.roomid;
+        var sequence = req.body.sequence;
+        var get_point = req.body.get_point;
+        var suggestion = req.body.suggestion;
+
+        db.get('submits').find({
+            studentid: studentid,
+            roomid: roomid,
+            sequence: sequence
+        }).assign({
+            had_revise: true,
+            get_point: get_point,
+            suggestion: suggestion
+        })
+            .write();
+
+        res.json({
+            success: true
+        });
+    });
+
+
+    var onlineList = [];
+
+    // 接收來自於瀏覽器的資料
+    socket.on('join', function (data) {
+        process.stdout.write(data.studentid + '加入了房間。 '); // 不換行
+
+        socket.broadcast.emit('message', data.studentid + " 加入了房間。");
     });
 
     // 離線

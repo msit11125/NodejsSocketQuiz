@@ -5,11 +5,13 @@
       "id": "5F785633",
       "stulist": [
         "s1086106",
-        "",
-        "111",
-        "s1086104"
+        "s1086104",
+        "5F785633",
+        "5F785633 ",
+        "teacher"
       ],
       "creator": "teacher",
+      "room_name": "數學小教室",
       "create_time": null
     }
   ],
@@ -25,8 +27,7 @@
         "4",
         "1",
         "2"
-      ],
-      "submited": true
+      ]
     },
     {
       "roomid": "5F785633",
@@ -34,8 +35,7 @@
       "point": 10,
       "type": "畫圖作答",
       "content": "寫出注音的國字： 「ㄉㄧㄝˊ ㄉㄧㄝˊ」不休",
-      "options": [],
-      "submited": true
+      "options": []
     },
     {
       "roomid": "5F785633",
@@ -43,8 +43,7 @@
       "point": 10,
       "type": "簡答題",
       "content": "請解釋甚麼是數位學習?",
-      "options": [],
-      "submited": false
+      "options": []
     }
   ],
   "submits": [
@@ -53,33 +52,39 @@
       "roomid": "5F785633",
       "sequence": 1,
       "type": "選擇題",
-      "submit_time": "2020-06-28T13:49:06.504Z",
-      "answer_option_index": 1,
+      "submit_time": "2020-06-29T06:35:24.811Z",
+      "answer_option_index": 2,
       "answer_text": null,
-      "answer_draw": "s1086106_5F785633_1",
-      "get_point": null
+      "answer_draw": null,
+      "had_revise": true,
+      "get_point": "1",
+      "suggestion": "...!!"
     },
     {
       "studentid": "s1086106",
       "roomid": "5F785633",
       "sequence": 2,
       "type": "畫圖作答",
-      "submit_time": "2020-06-28T13:34:55.550Z",
+      "submit_time": "2020-06-29T06:34:19.396Z",
       "answer_option_index": null,
       "answer_text": null,
       "answer_draw": "s1086106_5F785633_2",
-      "get_point": null
+      "had_revise": false,
+      "get_point": null,
+      "suggestion": null
     },
     {
       "studentid": "s1086104",
       "roomid": "5F785633",
       "sequence": 2,
       "type": "畫圖作答",
-      "submit_time": "2020-06-28T13:50:03.087Z",
+      "submit_time": "2020-06-29T06:22:39.276Z",
       "answer_option_index": null,
       "answer_text": null,
       "answer_draw": "s1086104_5F785633_2",
-      "get_point": null
+      "had_revise": true,
+      "get_point": null,
+      "suggestion": null
     }
   ]
 }

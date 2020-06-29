@@ -1,13 +1,14 @@
 <html>
 
 <head>
-    <title>Socket</title>
+    <title>數位測驗房間</title>
 
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css">
-
+    <link rel="stylesheet" type="text/css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
     <style>
         * {
             font-family: sans-serif;
@@ -51,44 +52,54 @@
 
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
         integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
-    </script>
+        </script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
         integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
+        </script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+
+    <script type="text/javascript">
+        // Default Configuration
+        $(document).ready(function () {
+            toastr.options = {
+                'closeButton': true,
+                'debug': false,
+                'newestOnTop': false,
+                'progressBar': false,
+                'positionClass': 'toast-top-right',
+                'preventDuplicates': false,
+                'showDuration': '1000',
+                'hideDuration': '1000',
+                'timeOut': '5000',
+                'extendedTimeOut': '1000',
+                'showEasing': 'swing',
+                'hideEasing': 'linear',
+                'showMethod': 'fadeIn',
+                'hideMethod': 'fadeOut',
+            }
+        });
+
     </script>
-   
 </head>
 
 <body>
     <div id="app" class="p-4">
-        <div
+        <div v-if="RoomID"
             class="d-flex justify-content-between text-center container alert bg-dark text-white border border-white shadow mt-2 mb-0 rounded-0">
-            房間代號：{{RoomID == ''? '（未加入）': RoomID}}
-            <span class="text-white">建立者：{{Creator}}</span>
+            <span>房間代號：{{RoomID == ''? '（未加入）': RoomID}} <button type="button" v-on:click="leaveroom"
+                    class="btn btn-sm btn-link text-warning">退出</button></span>
+            <span class="text-white">房間名稱：{{RoomName}}&nbsp;&nbsp;&nbsp;（角色：{{Role}}）</span>
         </div>
         <div class="p-2 container">
 
-            <router-link to="/" class="btn btn-dark">加入房間</router-link>
-            <router-link to="/home" class="btn btn-dark">題目列表</router-link>
-            <router-link to="/assign" class="btn btn-dark">指派題目</router-link>
-            <router-link to="/revise" class="btn btn-dark">批改</router-link>
+            <router-link to="/" class="btn btn-dark" v-if="!RoomID">加入房間</router-link>
+            <router-link to="/home" class="btn btn-dark" v-if="RoomID && Role == '學生'">題目列表</router-link>
+            <router-link to="/assign" class="btn btn-dark" v-if="Role == '老師'">指派題目</router-link>
+            <router-link to="/revise" class="btn btn-dark" v-if="Role == '老師'">批改</router-link>
         </div>
         <router-view></router-view>
 
-
-        <!-- Flexbox container for aligning the toasts -->
-        <div class="" style="position: fixed; bottom:0; left:50%; transform: translateX(-50%);min-width: 350px;">
-            <div role="alert" aria-live="assertive" aria-atomic="true" class="toast" data-autohide="false">
-                <div class="toast-header">
-                    <strong class="mr-auto pr-5" style="font-size: 26px;color:darkblue;">訊息通知</strong>
-                    <small>1分鐘前</small>
-                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="toast-body p-4" style="font-size: 18px;" v-html="NotiyMsg">
-                </div>
-            </div>
-        </div>
 
     </div>
 
@@ -130,6 +141,7 @@
                         </div>
                         <div class="modal-body">
                             <input type="text" v-model="creatorName" placeholder="建立人" class="p-3 w-100" style="font-size:18px">
+                            <input type="text" v-model="roomName" placeholder="房間名稱" class="p-3 w-100 mt-2" style="font-size:18px">
                         </div>
                         <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
@@ -154,9 +166,10 @@
                     <th scope="col">#題號</th>
                     <th scope="col">題型</th>
                     <th scope="col">題目</th>
-                    <th scope="col">配分</th>
-                    <th scope="col" class="text-center">作答</th>
-                    <th scope="col" style="width:90px">已繳交</th>
+                    <th scope="col">分數</th>
+                    <th scope="col" class="text-center">動作</th>
+                    <th scope="col" class="text-center" style="width:90px" v-if="Role=='學生'">已繳交</th>
+                    <th scope="col" class="text-center" style="width:90px" v-if="Role=='學生'">評分</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -166,65 +179,92 @@
                     <td>{{item.content.substring(0, 10)}} ...</td>
                     <td>{{item.point}}</td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-light btn-sm" v-on:click="startAnswer(item.sequence)">開始作答</button>
+                        <button type="button" class="btn btn-light btn-sm mt-0" v-on:click="startAnswer(item.sequence)">{{ Role=='學生' ? '作答': '查看'}}</button>
                     </td>
-                    <td><span v-if="item.submited"><i class="fas fa-check"></i></span></td>
+                    <td class="text-center" style="color:#93F916" v-if="Role=='學生'"><span v-if="item.submited"><i class="fas fa-check"></i></span></td>
+                    <td class="text-center" v-if="Role=='學生'">{{item.had_revise ? item.get_point : "未批改"}}</span></td>
+                   
                   </tr>
                   
                 </tbody>
               </table>
 
+            <div class="alert bg-secondary text-white text-right font-weight-bold" style="font-size:22px">
+                總分 {{total_point}}
+            </div>
             
-            <input type="text" v-model="message" placeholder="問題反映">
-            <button type="button" v-on:click="sendMessage">傳送資料</button>
         </div>
     </script>
 
 
     <script type="text/x-template" id="component-assign">
         <div class="container">
-            <div class="card">
+            <table class="table table-light table-striped mt-3 border shadow-sm">
+                <thead>
+                  <tr class="bg-primary text-white">
+                    <th scope="col">#題號</th>
+                    <th scope="col">題型</th>
+                    <th scope="col">題目</th>
+                    <th scope="col">分數</th>
+                    <th scope="col">動作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in list">
+                    <th scope="row">{{item.sequence}}</th>
+                    <td>{{item.type}}</td>
+                    <td>{{item.content}}</td>
+                    <td>{{item.point}}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-light btn-sm mt-0" v-on:click="startAnswer(item.sequence)">查看</button>
+                    </td>
+                  </tr>
+                  
+                </tbody>
+              </table>
+            <div class="card mt-3">
                 <div class="card-body">
 
                   <div class="my-2 font-weight-bold">題目種類</div>
                   <div>
-                      <label class="radio-inline mr-2">
-                        <input type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1">選擇題
+                      <label class="radio-inline mr-3">
+                        <input type="radio" v-model="type" id="inlineRadio1" value="選擇題">選擇題
                       </label>
-                      <label class="radio-inline mr-2">
-                        <input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2">簡答題
+                      <label class="radio-inline mr-3">
+                        <input type="radio" v-model="type" id="inlineRadio2" value="簡答題">簡答題
                       </label>
-                      <label class="radio-inline mr-2">
-                        <input type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option3">畫圖作答
+                      <label class="radio-inline mr-3">
+                        <input type="radio" v-model="type" id="inlineRadio3" value="畫圖作答">畫圖作答
                       </label>
                   </div>
 
                   <div class="my-2 font-weight-bold">問題描述</div>
                   <div class="py-2">
-                    <textarea name="" id="" rows="3" class="w-100 border border-dark p-2"></textarea>
+                    <textarea v-model="content" id="" rows="3" class="w-100 border border-dark p-2"></textarea>
                   </div>
 
-                  <div class="my-2 font-weight-bold">得分</div>
+                  <div v-if="type == '選擇題'">
+                    <div class="my-2 font-weight-bold">答案選項</div>
+                    <div class="px-4">
+                        <div v-for="(item,index) in options">
+                            <input type="text" class="form-control my-2" :placeholder="'選項 ' + String.fromCharCode(index+65)" />
+                        </div>
+  
+                        <!-- <div class="text-right mt-3">
+                          <button type="button" class="btn bg-primary text-white py-1 px-3">增加選項</button> 
+                        </div> -->
+                    </div>
+                  </div>
+                 
+                  <div class="my-2 font-weight-bold">分數</div>
                   <div class="checkbox">
                     <label>
-                        <input type="text" class="form-control" placeholder="獲得分數">
+                        <input type="text" class="form-control" placeholder="獲得分數" v-model="point">
                     </label>
                   </div>   
 
-                  <div class="my-2 font-weight-bold">答案選項</div>
-                  <div class="px-4">
-                      <div><input type="text" class="form-control my-2" placeholder="選項A"> </div>
-                      <div><input type="text" class="form-control my-2" placeholder="選項B"> </div>
-                      <div><input type="text" class="form-control my-2" placeholder="選項C"> </div>
-                      <div><input type="text" class="form-control my-2" placeholder="選項D"> </div>
-
-                      <div class="text-right mt-3">
-                        <button type="button" class="btn bg-primary text-white py-1 px-3">增加選項</button> 
-                      </div>
-                  </div>
-                 
                   <div class="my-4">
-                    <button type="button" v-on:click="add_quest" class="btn btn-outline-secondary"><i class="fas fa-plus"></i> 新增題目</button>
+                    <button type="button" v-on:click="newassigns" class="btn btn-outline-secondary"><i class="fas fa-plus"></i> 新增題目</button>
                   </div>
                  
                 </div>
@@ -282,26 +322,30 @@
             <hr/>
             <div class="text-center">
                 <h5 class="text-center mb-4">分數 {{assign.point}}</h5>
-                <button type="button" class="btn btn-dark btn-lg px-5" v-on:click="submitAnswer">繳交答案</button>
-
-                
+                <button type="button" class="btn btn-dark btn-lg px-5" :disabled="assign.had_revise" v-on:click="submitAnswer" v-if="Role=='學生'">繳交答案</button>
             </div>
+
+            <div v-if="assign.had_revise" class="alert alert-dark text-center mt-3">
+                <div>評分：{{assign.get_point}}</div>
+                <div>評語：{{assign.suggestion}}</div>
+            </div>
+
             <div class="text-center">
-                <router-link to="/home" class="btn btn-outline-secondary px-5 mt-4">回上頁</router-link>
+                <button @click="$router.go(-1)" class="btn btn-outline-secondary px-5 mt-4">回上頁</button>
             </div>
         </div>
     </script>
 
     <script type="text/x-template" id="component-revise">
         <div class="container">
-            <div class="row">
+            <div class="row mt-3">
                 <div class="col-12 card shadow-sm border p-4 mb-4" v-for="(value, propertyName, index) in submitlist">
-                    <h4 class="card-title border-bottom" style="cursor:pointer;">
-                        {{ propertyName }}
+                    <h4 class="card-title border-bottom pb-2 font-weight-bold" style="cursor:pointer;">
+                        <i class="fas fa-user-edit mr-2"></i>{{ propertyName }}
                     </h4>
                     <div v-for="item in value">
-                        <div class="bg-light p-2"> 題目{{ item.sequence }}. {{ item.content }}
-                            <br>
+                        <div class="bg-light p-4"> <span class="font-weight-bold bg-dark text-white p-2 mr-2">題目 {{ item.sequence }}</span>{{ item.content }}
+                            <br><br>
                             <span class="mr-2" v-for="(opt,index) in item.options">
                                 ({{String.fromCharCode(index+65)}}) {{opt}}
                             </span>
@@ -318,7 +362,15 @@
                                 <img :src="'/database/images/' + item.answer_draw + '.png'" alt="" class="border shadow-sm" style="width:400px">
                             </div>
                         </div>
-                        
+                        <div class="p-2 text-right">
+                            <div class="text-dark">分數：<input type="number" v-model="item.get_point" style="width:150px" class="ml-3 border border-dark text-center p-1"></div>
+                            <div class="mt-2">評語：<input class="ml-3 border border-dark p-1" v-model="item.suggestion" /></div>
+                            <div class="mt-2">
+                                <span class="text-success" v-if="item.had_revise"><i class="fas fa-check mr-2"></i>已批改</span>
+                                <button type="button" class="btn btn-primary mt-2 ml-4" v-on:click="revise(item)">送出</button>
+                            </div>
+                        </div>
+                        <div>{{ item.submit_time| formatDate }}</div>
                     </div>
                 </div>
             </div>
@@ -328,8 +380,13 @@
     <script>
         // globals var
         var socket = io.connect();
-
-
+        Vue.filter('formatDate', function (value) {
+            if (value) {
+                var m = new Date(value);
+                var dateString = m.getFullYear() + "/" + (m.getMonth() + 1) + "/" + m.getDate() + " " + m.getHours() + ":" + m.getMinutes() + ":" + m.getSeconds();
+                return dateString;
+            }
+        });
         // 1. Define route components.
         var join = Vue.component("component-join", {
             template: '#component-join',
@@ -339,6 +396,7 @@
                     joinID: '',
                     error: '',
                     creatorName: '',
+                    roomName:'',
                     newRoomID: '',
                 }
             },
@@ -362,9 +420,14 @@
 
                             if (res.success) {
                                 app.RoomID = res.id;
+                                app.RoomName = res.room_name;
                                 app.Creator = res.creator;
                                 app.StudentId = that.studentID;
-                                app.Role = 'Participants';
+                                app.Role = res.role;
+
+                                socket.emit('join', {
+                                    'studentid': that.studentID
+                                });
 
                                 that.$router.push('/home');
                             } else {
@@ -392,18 +455,19 @@
                         type: "post",
                         data: JSON.stringify({
                             "creator": that.creatorName,
+                            "room_name": that.roomName
                         }),
                         contentType: 'application/json; charset=utf-8',
                         dataType: "json",
                         success: function (res) {
                             if (res.success) {
                                 app.RoomID = res.id;
-                                app.NotiyMsg =
-                                    `建立房間成功，房間代號(Code)：<span class="text-success" style="font-size:30px;">${res.id}</span>`;
+                                app.RoomName = res.room_name;
                                 app.Creator = res.creator;
-                                app.Role = 'Owner';
-
-                                $('.toast').toast('show');
+                                app.Role = '老師';
+                                var msg = `建立房間成功，房間代號(Code)：<span class="text-success" style="font-size:30px;">${res.id}</span>`;
+                                toastr.success(msg);
+                                
                                 that.$router.push('/home');
                             } else {
                                 alert('error');
@@ -424,25 +488,19 @@
             data() {
                 return {
                     list: [],
-                    message: ''
+                    total_point: 0,
+                    message: '',
+                    Role: ''
                 }
             },
             methods: {
-                sendMessage: function () {
-                    var that = this;
-                    socket.emit('client_data', {
-                        'letter': that.message
-                    });
-                },
+
                 startAnswer: function (seq) {
                     this.$router.push('/answer?seq=' + seq);
                 }
             },
             mounted() {
                 var that = this;
-                socket.on('message', function (data) {
-                    that.list.push(data);
-                });
 
                 $.ajax({
                     url: window.origin + '/assigns',
@@ -454,6 +512,7 @@
                     dataType: "json",
                     success: function (res) {
                         that.list = res;
+                        that.total_point = res.map(r => r.get_point).reduce((a, b) => a || 0 + b || 0);
                     },
                     error: function (xhr, status, error) {
                         console.log(error)
@@ -468,17 +527,63 @@
             template: '#component-assign',
             data() {
                 return {
-
+                    list: [],
+                    point: 0,
+                    type: '選擇題',
+                    content: '',
+                    options: ['', '', '', '']
                 }
             },
             methods: {
-                assign: function () {
+                newassigns: function () {
+                    var that = this;
+                    $.ajax({
+                        url: window.origin + '/newassigns',
+                        type: "post",
+                        data: JSON.stringify({
+                            "roomid": that.$parent.RoomID,
+                            "get_point": that.point,
+                            "type": that.type,
+                            "content": that.content,
+                            "options": that.options
+                        }),
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: "json",
+                        success: function (res) {
+                            if (res.success) {
+                               
+                                toastr.success(`題目新增成功。`);
+                            } else {
+                                alert('error');
+                            }
+                        },
+                        error: function (xhr, status, error) {
 
+                        }
+                    });
                 },
-                add_quest: function () {
-
+                startAnswer: function (seq) {
+                    this.$router.push('/answer?seq=' + seq);
                 }
             },
+            mounted() {
+                var that = this;
+
+                $.ajax({
+                    url: window.origin + '/assigns',
+                    type: "get",
+                    data: {
+                        roomid: that.$parent.RoomID
+                    },
+                    dataType: "json",
+                    success: function (res) {
+                        that.list = res;
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(error)
+                    }
+                });
+            }
         });
 
         var Revise = Vue.component("component-revise", {
@@ -488,8 +593,35 @@
                     submitlist: []
                 }
             },
-            methods: {},
-            mounted(){
+            methods: {
+                revise: function (assign) {
+                    $.ajax({
+                        url: window.origin + '/revise',
+                        type: "post",
+                        data: JSON.stringify({
+                            "studentid": assign.studentid,
+                            "roomid": assign.roomid,
+                            "sequence": assign.sequence,
+                            "get_point": assign.get_point,
+                            "suggestion": assign.suggestion
+                        }),
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: "json",
+                        success: function (res) {
+                            if (res.success) {
+                                assign.had_revise = true;
+                                toastr.success(`批改成功。`);
+                            } else {
+                                alert('error');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+
+                        }
+                    });
+                }
+            },
+            mounted() {
                 var that = this;
                 $.ajax({
                     url: window.origin + '/submitlist',
@@ -499,7 +631,7 @@
                     },
                     dataType: "json",
                     success: function (res) {
-                        console.log(res)
+
                         that.submitlist = res;
                     },
                     error: function (xhr, status, error) {
@@ -604,8 +736,7 @@
                         dataType: "json",
                         success: function (res) {
                             if (res.success) {
-                                app.NotiyMsg = `題目${that.assign.sequence} 繳交成功。`;
-                                $('.toast').toast('show');
+                                toastr.success(`題目${that.assign.sequence} 繳交成功。`);
                                 that.$router.push('/home');
                             } else {
                                 alert('error');
@@ -614,7 +745,7 @@
                         error: function (xhr, status, error) {
 
                         }
-                    })
+                    });
                 }
             },
             mounted() {
@@ -626,12 +757,25 @@
                     url: window.origin + '/assignBySeq',
                     type: "get",
                     data: {
+                        studentid: that.$parent.StudentId,
                         sequence: that.$route.query.seq,
                         roomid: that.$parent.RoomID
                     },
                     dataType: "json",
                     success: function (res) {
                         that.assign = res;
+
+                        that.answer_option_index = that.assign.answer_option_index;
+                        that.answer_text = that.assign.answer_text;
+
+                        if (that.assign.answer_draw) {
+                            var image = new Image();
+                            image.onload = function () {
+                                that.ctx.drawImage(image, 0, 0, that.canvas.width, that.canvas.height);
+                            };
+                            image.src = '/database/images/' + that.assign.answer_draw + '.png';
+                        }
+
                     },
                     error: function (xhr, status, error) {
                         console.log(error)
@@ -646,33 +790,33 @@
         // `Vue.extend()`, or just a component options object.
         // We'll talk about nested routes later.
         const routes = [{
-                path: '/',
-                component: join
-            },
-            {
-                path: '/home',
-                components: {
-                    default: Home
-                }
-            },
-            {
-                path: '/assign',
-                components: {
-                    default: Assign
-                }
-            },
-            {
-                path: '/revise',
-                components: {
-                    default: Revise
-                }
-            },
-            {
-                path: '/answer',
-                components: {
-                    default: Answer
-                }
+            path: '/',
+            component: join
+        },
+        {
+            path: '/home',
+            components: {
+                default: Home
             }
+        },
+        {
+            path: '/assign',
+            components: {
+                default: Assign
+            }
+        },
+        {
+            path: '/revise',
+            components: {
+                default: Revise
+            }
+        },
+        {
+            path: '/answer',
+            components: {
+                default: Answer
+            }
+        }
         ]
 
         // 3. Create the router instance and pass the `routes` option
@@ -689,17 +833,45 @@
             router,
             data() {
                 return {
-                    RoomID: '5F785633',
+                    RoomID: '',
+                    RoomName: '',
                     Creator: '',
-                    NotiyMsg: '',
-                    StudentId: 's1086106',
-                    Role: '', // Participants or Owner
+                    StudentId: '',
+                    Role: '', // 學生 or 老師
                 }
             },
-            mounted() {},
+            methods: {
+                leaveroom: function () {
+                    this.RoomID = '';
+                    this.RoomName = '';
+                    this.Creator = '';
+                    this.StudentId = '';
+                    this.Role = '';
+
+                    this.$router.push('/');
+                }
+            },
+            created() {
+                var save = JSON.parse(localStorage.getItem('$data'));
+                for (let prop in save) {
+                    this[prop] = save[prop];
+                }
+
+                var that = this;
+                socket.on('message', function (data) {
+                    toastr.info(data);
+                });
+            },
+
             watch: {
                 $route(to, from) {
 
+                },
+                $data: {
+                    handler: function (val, oldVal) {
+                        localStorage.setItem('$data', JSON.stringify(val));
+                    },
+                    deep: true
                 }
             }
         }).$mount('#app');
