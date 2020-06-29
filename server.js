@@ -18,9 +18,10 @@ const adapter = new FileSync('database/db.json');
 const db = low(adapter);
 
 // ---------------------------- lowdb ----------------------------
-
-server.listen(8001);
-console.log("listen on http://localhost:8001");
+var port = process.env.PORT || 8001;
+server.listen(port, function () {
+    console.log("Listening on http://localhost:" + port);
+});
 
 
 app.use(bodyParser.json());

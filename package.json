@@ -2,9 +2,9 @@
   "name": "nodejs-socket-quiz",
   "version": "1.0.0",
   "description": "Socket文字冒險遊戲",
-  "main": "game.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node game.js",
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "msit11125",
