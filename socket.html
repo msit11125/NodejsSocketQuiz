@@ -52,12 +52,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
         integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
-        </script>
+    </script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
         integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
-        </script>
-    <script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+    </script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js">
+    </script>
 
     <script type="text/javascript">
         // Default Configuration
@@ -66,34 +66,33 @@
                 'closeButton': true,
                 'debug': false,
                 'newestOnTop': false,
-                'progressBar': false,
+                'progressBar': true,
                 'positionClass': 'toast-top-right',
                 'preventDuplicates': false,
                 'showDuration': '1000',
                 'hideDuration': '1000',
-                'timeOut': '5000',
-                'extendedTimeOut': '1000',
+                'timeOut': '8000',
+                'extendedTimeOut': '5000',
                 'showEasing': 'swing',
                 'hideEasing': 'linear',
                 'showMethod': 'fadeIn',
                 'hideMethod': 'fadeOut',
             }
         });
-
     </script>
 </head>
 
 <body>
     <div id="app" class="p-4">
         <div v-if="RoomID"
-            class="d-flex justify-content-between text-center container alert bg-dark text-white border border-white shadow mt-2 mb-0 rounded-0">
+            class="d-flex justify-content-between align-items-center text-center container alert bg-dark text-white border border-white shadow mt-2 mb-0 rounded-0">
             <span>房間代號：{{RoomID == ''? '（未加入）': RoomID}} <button type="button" v-on:click="leaveroom"
                     class="btn btn-sm btn-link text-warning">退出</button></span>
-            <span class="text-white">房間名稱：{{RoomName}}&nbsp;&nbsp;&nbsp;（角色：{{Role}}）</span>
+            <span class="text-white">房間名稱：{{RoomName}}&nbsp;&nbsp;&nbsp;({{Role}} {{StudentId}})</span>
         </div>
         <div class="p-2 container">
 
-            <router-link to="/" class="btn btn-dark" v-if="!RoomID">加入房間</router-link>
+            <!-- <router-link to="/" class="btn btn-dark" v-if="!RoomID">加入房間</router-link> -->
             <router-link to="/home" class="btn btn-dark" v-if="RoomID && Role == '學生'">題目列表</router-link>
             <router-link to="/assign" class="btn btn-dark" v-if="Role == '老師'">指派題目</router-link>
             <router-link to="/revise" class="btn btn-dark" v-if="Role == '老師'">批改</router-link>
@@ -101,21 +100,35 @@
         <router-view></router-view>
 
 
+        <!-- Flexbox container for aligning the toasts -->
+        <div class="float-right">
+            <div role="alert" aria-live="assertive" aria-atomic="true" class="toast bg-white" data-autohide="false">
+                <div class="toast-header bg-light">
+                    <strong class="mr-auto pr-5" style="font-size: 26px;color:darkblue;">訊息通知</strong>
+                    <small>1分鐘前</small>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body p-4" style="font-size: 18px;" v-html="NotiyMsg">
+                </div>
+            </div>
+        </div>
     </div>
 
 
     <script type="text/x-template" id="component-join">
         <div>
-
-            <div class="d-flex justify-content-center align-items-center">
+            <div class="d-flex justify-content-center align-items-center h-75">
                 <div class="text-center card p-4 mt-5 border border-dark shadow" style="width:400px;">
                      <h3 class="font-weight-bold text-dark p-3"><i class="fas fa-laptop-house"></i> 加入房間</h3>
                      <div class="form-group">
+                        <input type="text" v-model="joinID" placeholder="房間代號 (Code)" class="p-3" style="font-size:18px">
+                    </div>
+                     <div class="form-group">
                          <input type="text" v-model="studentID" placeholder="學號 (Student ID)" class="p-3" style="font-size:18px">
                      </div>
-                     <div class="form-group">
-                         <input type="text" v-model="joinID" placeholder="房間代號 (Code)" class="p-3" style="font-size:18px">
-                     </div>
+                    
                      <div class="text-danger">
                          {{error}}
                      </div>
@@ -160,36 +173,37 @@
 
     <script type="text/x-template" id="component-home">
         <div class="container">
-            <table class="table table-dark">
+            <table class="table table-dark shadow">
                 <thead>
                   <tr>
                     <th scope="col">#題號</th>
                     <th scope="col">題型</th>
                     <th scope="col">題目</th>
-                    <th scope="col">分數</th>
+                    <th scope="col">配分</th>
                     <th scope="col" class="text-center">動作</th>
-                    <th scope="col" class="text-center" style="width:90px" v-if="Role=='學生'">已繳交</th>
-                    <th scope="col" class="text-center" style="width:90px" v-if="Role=='學生'">評分</th>
+                    <th scope="col" class="text-center" style="width:90px" v-if="$parent.Role=='學生'">已繳交</th>
+                    <th scope="col" class="text-center" style="width:90px" v-if="$parent.Role=='學生'">評分</th>
+                    
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="item in list">
                     <th scope="row">{{item.sequence}}</th>
                     <td>{{item.type}}</td>
-                    <td>{{item.content.substring(0, 10)}} ...</td>
+                    <td>{{item.content.substring(0, 20)}} ...</td>
                     <td>{{item.point}}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-light btn-sm mt-0" v-on:click="startAnswer(item.sequence)">{{ Role=='學生' ? '作答': '查看'}}</button>
+                    <td class="text-center pt-1">
+                        <button type="button" class="btn btn-light btn-sm mt-0" v-on:click="startAnswer(item.sequence)">{{ $parent.Role=='學生' ? '作答': '查看'}}</button>
                     </td>
-                    <td class="text-center" style="color:#93F916" v-if="Role=='學生'"><span v-if="item.submited"><i class="fas fa-check"></i></span></td>
-                    <td class="text-center" v-if="Role=='學生'">{{item.had_revise ? item.get_point : "未批改"}}</span></td>
-                   
+                    <td class="text-center" style="color:#93F916" v-if="$parent.Role=='學生'"><span v-if="item.submited"><i class="fas fa-check"></i></span></td>
+                    <td class="text-center" v-if="$parent.Role=='學生'">{{item.had_revise ? item.get_point : "未批改"}}</span></td>
+                    
                   </tr>
                   
                 </tbody>
               </table>
 
-            <div class="alert bg-secondary text-white text-right font-weight-bold" style="font-size:22px">
+            <div class="alert bg-info shadow text-white text-right font-weight-bold" style="font-size:22px">
                 總分 {{total_point}}
             </div>
             
@@ -201,12 +215,13 @@
         <div class="container">
             <table class="table table-light table-striped mt-3 border shadow-sm">
                 <thead>
-                  <tr class="bg-primary text-white">
+                  <tr class="">
                     <th scope="col">#題號</th>
                     <th scope="col">題型</th>
                     <th scope="col">題目</th>
-                    <th scope="col">分數</th>
-                    <th scope="col">動作</th>
+                    <th scope="col">配分</th>
+                    <th scope="col" class="text-center">動作</th>
+                    <th scope="col" class="text-center">發布</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -215,14 +230,19 @@
                     <td>{{item.type}}</td>
                     <td>{{item.content}}</td>
                     <td>{{item.point}}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-light btn-sm mt-0" v-on:click="startAnswer(item.sequence)">查看</button>
+                    <td class="text-center pt-2">
+                        <button type="button" class="btn btn-light btn-sm mt-0" v-on:click="showQuiz(item.sequence)">查看</button>
+
+                        <!-- <button type="button" class="btn btn-danger btn-sm mt-0 ml-2" v-on:click="delete(item)">刪除</button> -->
+                    </td>
+                    <td class="text-center pt-3">
+                        <input type="checkbox" v-on:click="releaseQuiz(item)" v-model="item.release" style="zoom:1.5;"> 
                     </td>
                   </tr>
                   
                 </tbody>
               </table>
-            <div class="card mt-3">
+            <div class="card mt-3 shadow-sm">
                 <div class="card-body">
 
                   <div class="my-2 font-weight-bold">題目種類</div>
@@ -246,17 +266,22 @@
                   <div v-if="type == '選擇題'">
                     <div class="my-2 font-weight-bold">答案選項</div>
                     <div class="px-4">
-                        <div v-for="(item,index) in options">
-                            <input type="text" class="form-control my-2" :placeholder="'選項 ' + String.fromCharCode(index+65)" />
+                        <div v-for="(opt,index) in options" class="d-flex my-2">
+                            <input type="text" class="form-control" v-model="opt.val" :placeholder="'選項 ' + String.fromCharCode(index+65)" />
+                            <button type="button" class="btn btn-danger btn-sm ml-4" v-on:click="removeOption(index)">－</button>
                         </div>
-  
+                       <div class="text-right"> 
+                           <button type="button" class="btn btn-success btn-sm ml-4 text-right shadow-sm" v-on:click="addOption()">
+                               ＋
+                           </button>
+                        </div>
                         <!-- <div class="text-right mt-3">
                           <button type="button" class="btn bg-primary text-white py-1 px-3">增加選項</button> 
                         </div> -->
                     </div>
                   </div>
                  
-                  <div class="my-2 font-weight-bold">分數</div>
+                  <div class="my-2 font-weight-bold">配分</div>
                   <div class="checkbox">
                     <label>
                         <input type="text" class="form-control" placeholder="獲得分數" v-model="point">
@@ -264,7 +289,7 @@
                   </div>   
 
                   <div class="my-4">
-                    <button type="button" v-on:click="newassigns" class="btn btn-outline-secondary"><i class="fas fa-plus"></i> 新增題目</button>
+                    <button type="button" v-on:click="new_assigns" class="btn btn-primary btn-lg btn-block"><i class="fas fa-plus"></i> 新增題目</button>
                   </div>
                  
                 </div>
@@ -321,8 +346,8 @@
 
             <hr/>
             <div class="text-center">
-                <h5 class="text-center mb-4">分數 {{assign.point}}</h5>
-                <button type="button" class="btn btn-dark btn-lg px-5" :disabled="assign.had_revise" v-on:click="submitAnswer" v-if="Role=='學生'">繳交答案</button>
+                <h5 class="text-center mb-4">配分 {{assign.point}}</h5>
+                <button type="button" class="btn btn-dark btn-lg px-5" :disabled="assign.had_revise" v-on:click="submitAnswer" v-if="$parent.Role=='學生'">繳交答案</button>
             </div>
 
             <div v-if="assign.had_revise" class="alert alert-dark text-center mt-3">
@@ -359,18 +384,18 @@
                                 <span>{{item.answer_text}}</span>
                             </div>
                             <div v-if="item.type=='畫圖作答'" class="text-left">
-                                <img :src="'/database/images/' + item.answer_draw + '.png'" alt="" class="border shadow-sm" style="width:400px">
+                                <img :src="'/database/submits/' + item.answer_draw + '.png'" alt="" class="border shadow-sm" style="width:400px">
                             </div>
                         </div>
                         <div class="p-2 text-right">
-                            <div class="text-dark">分數：<input type="number" v-model="item.get_point" style="width:150px" class="ml-3 border border-dark text-center p-1"></div>
-                            <div class="mt-2">評語：<input class="ml-3 border border-dark p-1" v-model="item.suggestion" /></div>
+                            <div class="text-dark">評分：<input type="number" v-model="item.get_point" :placeholder="'本題配分 ' + item.point" style="width:150px" class="ml-3 border border-dark text-center p-1"></div>
+                            <div class="mt-2">評語：<input class="ml-3 border border-dark p-1" v-model="item.suggestion" placeholder="無" /></div>
                             <div class="mt-2">
                                 <span class="text-success" v-if="item.had_revise"><i class="fas fa-check mr-2"></i>已批改</span>
                                 <button type="button" class="btn btn-primary mt-2 ml-4" v-on:click="revise(item)">送出</button>
                             </div>
                         </div>
-                        <div>{{ item.submit_time| formatDate }}</div>
+                        <div class="mb-4">提交時間：{{ item.submit_time| formatDate }}</div>
                     </div>
                 </div>
             </div>
@@ -383,7 +408,8 @@
         Vue.filter('formatDate', function (value) {
             if (value) {
                 var m = new Date(value);
-                var dateString = m.getFullYear() + "/" + (m.getMonth() + 1) + "/" + m.getDate() + " " + m.getHours() + ":" + m.getMinutes() + ":" + m.getSeconds();
+                var dateString = m.getFullYear() + "/" + (m.getMonth() + 1) + "/" + m.getDate() + " " + m
+                    .getHours() + ":" + m.getMinutes() + ":" + m.getSeconds();
                 return dateString;
             }
         });
@@ -396,7 +422,7 @@
                     joinID: '',
                     error: '',
                     creatorName: '',
-                    roomName:'',
+                    roomName: '',
                     newRoomID: '',
                 }
             },
@@ -426,10 +452,16 @@
                                 app.Role = res.role;
 
                                 socket.emit('join', {
+                                    'role': res.role,
                                     'studentid': that.studentID
                                 });
+                                if (res.role == '學生') {
+                                    that.$router.push('/home');
+                                }
+                                if (res.role == '老師') {
+                                    that.$router.push('/assign');
+                                }
 
-                                that.$router.push('/home');
                             } else {
                                 that.error = '查無此房間代號。';
                             }
@@ -465,10 +497,12 @@
                                 app.RoomName = res.room_name;
                                 app.Creator = res.creator;
                                 app.Role = '老師';
-                                var msg = `建立房間成功，房間代號(Code)：<span class="text-success" style="font-size:30px;">${res.id}</span>`;
-                                toastr.success(msg);
-                                
-                                that.$router.push('/home');
+
+                                app.NotiyMsg =
+                                    `建立房間成功，房間代號(Code)：<span class="text-success" style="font-size:30px;">${res.id}</span>`;
+                                $('.toast').toast('show');
+
+                                that.$router.push('/assign');
                             } else {
                                 alert('error');
                             }
@@ -489,34 +523,48 @@
                 return {
                     list: [],
                     total_point: 0,
-                    message: '',
-                    Role: ''
+                    message: ''
                 }
             },
             methods: {
-
                 startAnswer: function (seq) {
                     this.$router.push('/answer?seq=' + seq);
+                },
+                getAssigns: function () {
+                    var that = this;
+                    $.ajax({
+                        url: window.origin + '/assigns',
+                        type: "get",
+                        data: {
+                            roomid: that.$parent.RoomID,
+                            studentid: that.$parent.StudentId,
+                        },
+                        dataType: "json",
+                        success: function (res) {
+                            that.list = res;
+                            if (res.length > 0) {
+
+                                that.total_point = res.map(r => r.get_point).reduce((a, b) =>
+                                    parseInt(a || 0) + parseInt(b || 0));
+
+                            }
+
+                        },
+                        error: function (xhr, status, error) {
+                            console.log(error)
+                        }
+                    });
                 }
             },
             mounted() {
+                this.getAssigns();
                 var that = this;
 
-                $.ajax({
-                    url: window.origin + '/assigns',
-                    type: "get",
-                    data: {
-                        roomid: that.$parent.RoomID,
-                        studentid: that.$parent.StudentId,
-                    },
-                    dataType: "json",
-                    success: function (res) {
-                        that.list = res;
-                        that.total_point = res.map(r => r.get_point).reduce((a, b) => a || 0 + b || 0);
-                    },
-                    error: function (xhr, status, error) {
-                        console.log(error)
-                    }
+                socket.on('assign_release', function (data) {
+                    toastr.info(data);
+                    setTimeout(() => {
+                        that.getAssigns();
+                    }, 1000);
                 });
             }
         });
@@ -531,28 +579,47 @@
                     point: 0,
                     type: '選擇題',
                     content: '',
-                    options: ['', '', '', '']
+                    options: [{
+                        val: ''
+                    }, {
+                        val: ''
+                    }, {
+                        val: ''
+                    }, {
+                        val: ''
+                    }]
                 }
             },
             methods: {
-                newassigns: function () {
+                new_assigns: function () {
                     var that = this;
                     $.ajax({
-                        url: window.origin + '/newassigns',
+                        url: window.origin + '/new_assigns',
                         type: "post",
                         data: JSON.stringify({
                             "roomid": that.$parent.RoomID,
-                            "get_point": that.point,
+                            "point": parseInt(that.point),
                             "type": that.type,
                             "content": that.content,
-                            "options": that.options
+                            "options": that.options.filter(o => o.val != '').map(o => o.val)
                         }),
                         contentType: 'application/json; charset=utf-8',
                         dataType: "json",
                         success: function (res) {
                             if (res.success) {
-                               
                                 toastr.success(`題目新增成功。`);
+                                that.getAssignsAll();
+                                that.point = 0;
+                                that.content = '';
+                                that.options = [{
+                                    val: ''
+                                }, {
+                                    val: ''
+                                }, {
+                                    val: ''
+                                }, {
+                                    val: ''
+                                }];
                             } else {
                                 alert('error');
                             }
@@ -562,27 +629,72 @@
                         }
                     });
                 },
-                startAnswer: function (seq) {
+                showQuiz: function (seq) {
                     this.$router.push('/answer?seq=' + seq);
+                },
+                addOption: function () {
+                    this.options.push({
+                        val: ''
+                    });
+                },
+                removeOption: function (opt_index) {
+                    this.options.splice(opt_index, 1);
+                },
+                releaseQuiz: function (item) {
+                    item.release = !item.release;
+                    var that = this;
+                    $.ajax({
+                        url: window.origin + '/release_assigns',
+                        type: "post",
+                        data: JSON.stringify({
+                            "roomid": that.$parent.RoomID,
+                            "sequence": item.sequence,
+                            "release": item.release,
+                        }),
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: "json",
+                        success: function (res) {
+                            if (res.success) {
+                                if (item.release) {
+                                    toastr.success(`題目${item.sequence} 發布成功。`);
+
+                                    socket.emit('broadcast_release', {
+                                        'message': "題目 " + item.sequence + "  可以開始作答。"
+                                    });
+                                } else {
+                                    socket.emit('broadcast_release', {
+                                        'message': "題目 " + item.sequence + "  已被取消作答。"
+                                    });
+                                }
+                            } else {
+                                alert('error');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+
+                        }
+                    });
+                },
+                getAssignsAll: function () {
+                    var that = this;
+                    $.ajax({
+                        url: window.origin + '/assigns_all',
+                        type: "get",
+                        data: {
+                            roomid: that.$parent.RoomID
+                        },
+                        dataType: "json",
+                        success: function (res) {
+                            that.list = res;
+                        },
+                        error: function (xhr, status, error) {
+                            console.log(error)
+                        }
+                    });
                 }
             },
             mounted() {
-                var that = this;
-
-                $.ajax({
-                    url: window.origin + '/assigns',
-                    type: "get",
-                    data: {
-                        roomid: that.$parent.RoomID
-                    },
-                    dataType: "json",
-                    success: function (res) {
-                        that.list = res;
-                    },
-                    error: function (xhr, status, error) {
-                        console.log(error)
-                    }
-                });
+                this.getAssignsAll();
             }
         });
 
@@ -771,9 +883,10 @@
                         if (that.assign.answer_draw) {
                             var image = new Image();
                             image.onload = function () {
-                                that.ctx.drawImage(image, 0, 0, that.canvas.width, that.canvas.height);
+                                that.ctx.drawImage(image, 0, 0, that.canvas.width, that.canvas
+                                    .height);
                             };
-                            image.src = '/database/images/' + that.assign.answer_draw + '.png';
+                            image.src = '/database/submits/' + that.assign.answer_draw + '.png';
                         }
 
                     },
@@ -790,33 +903,33 @@
         // `Vue.extend()`, or just a component options object.
         // We'll talk about nested routes later.
         const routes = [{
-            path: '/',
-            component: join
-        },
-        {
-            path: '/home',
-            components: {
-                default: Home
+                path: '/',
+                component: join
+            },
+            {
+                path: '/home',
+                components: {
+                    default: Home
+                }
+            },
+            {
+                path: '/assign',
+                components: {
+                    default: Assign
+                }
+            },
+            {
+                path: '/revise',
+                components: {
+                    default: Revise
+                }
+            },
+            {
+                path: '/answer',
+                components: {
+                    default: Answer
+                }
             }
-        },
-        {
-            path: '/assign',
-            components: {
-                default: Assign
-            }
-        },
-        {
-            path: '/revise',
-            components: {
-                default: Revise
-            }
-        },
-        {
-            path: '/answer',
-            components: {
-                default: Answer
-            }
-        }
         ]
 
         // 3. Create the router instance and pass the `routes` option
@@ -837,6 +950,7 @@
                     RoomName: '',
                     Creator: '',
                     StudentId: '',
+                    NotiyMsg: '',
                     Role: '', // 學生 or 老師
                 }
             },
@@ -846,6 +960,7 @@
                     this.RoomName = '';
                     this.Creator = '';
                     this.StudentId = '';
+                    this.NotiyMsg = '';
                     this.Role = '';
 
                     this.$router.push('/');

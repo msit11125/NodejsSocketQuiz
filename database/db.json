@@ -8,11 +8,28 @@
         "s1086104",
         "5F785633",
         "5F785633 ",
-        "teacher"
+        "teacher",
+        "123",
+        "1234",
+        "aaa"
       ],
       "creator": "teacher",
-      "room_name": "數學小教室",
+      "room_name": "綜合測驗",
       "create_time": null
+    },
+    {
+      "id": "487CD973",
+      "room_name": "課堂臨時測驗",
+      "stulist": [],
+      "creator": "teacher123",
+      "create_time": "2020-06-29T13:44:36.333Z"
+    },
+    {
+      "id": "D4C46016",
+      "room_name": "小房間",
+      "stulist": [],
+      "creator": "teacher0112",
+      "create_time": "2020-06-29T13:51:01.390Z"
     }
   ],
   "assigns": [
@@ -27,7 +44,9 @@
         "4",
         "1",
         "2"
-      ]
+      ],
+      "create_time": "2020-06-29T06:34:19.396Z",
+      "release": true
     },
     {
       "roomid": "5F785633",
@@ -35,7 +54,9 @@
       "point": 10,
       "type": "畫圖作答",
       "content": "寫出注音的國字： 「ㄉㄧㄝˊ ㄉㄧㄝˊ」不休",
-      "options": []
+      "options": [],
+      "create_time": "2020-06-29T06:34:19.396Z",
+      "release": true
     },
     {
       "roomid": "5F785633",
@@ -43,7 +64,23 @@
       "point": 10,
       "type": "簡答題",
       "content": "請解釋甚麼是數位學習?",
-      "options": []
+      "options": [],
+      "create_time": "2020-06-29T06:34:19.396Z",
+      "release": true
+    },
+    {
+      "roomid": "5F785633",
+      "sequence": 4,
+      "point": 20,
+      "type": "選擇題",
+      "content": "AA",
+      "options": [
+        "dd",
+        "aa",
+        "bb"
+      ],
+      "create_time": "2020-06-29T12:15:03.345Z",
+      "release": true
     }
   ],
   "submits": [
@@ -85,6 +122,18 @@
       "had_revise": true,
       "get_point": null,
       "suggestion": null
+    },
+    {
+      "studentid": "s1086106",
+      "roomid": "5F785633",
+      "sequence": 4,
+      "type": "選擇題",
+      "submit_time": "2020-06-29T13:40:50.457Z",
+      "answer_option_index": 1,
+      "answer_draw": "",
+      "get_point": "5",
+      "had_revise": true,
+      "suggestion": "10"
     }
   ]
 }
