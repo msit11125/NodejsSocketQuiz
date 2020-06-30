@@ -55,10 +55,13 @@ io.sockets.on('connection', function (socket) {
         }
     });
 
-    socket.on('broadcast_release', function (data) {
-        socket.broadcast.emit('assign_release', data.message);
+    socket.on('broadcast_release_server', function (data) {
+        socket.broadcast.emit('broadcast_release_client', data.message);
     });
 
+    socket.on('broadcast_revise_server', function (data) {
+        socket.broadcast.emit('broadcast_revise_client', data.message);
+    });
 
     // 離線
     socket.on('disconnect', () => {
@@ -173,7 +176,11 @@ app.post('/new_assigns', function (req, res) {
     var content = req.body.content;
     var options = req.body.options;
 
-    var last_sequence = db.get('assigns').filter({roomid:roomid}).last().value().sequence;
+    var last = db.get('assigns')
+    .filter({roomid:roomid})
+    .last()
+    .value();
+    var last_sequence = last ? last.sequence : 0;
 
     db.get('assigns')
         .push({
@@ -255,7 +262,7 @@ app.get('/submitlist', function (req, res) {
                 roomid: roomid,
                 sequence: list[i][j].sequence
             }).value();
-
+            
             list[i][j].point = anss.point;
             list[i][j].content = anss.content;
             list[i][j].options = anss.options;

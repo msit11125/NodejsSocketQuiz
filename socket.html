@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>數位測驗房間</title>
+    <title>數位隨堂測驗</title>
 
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
@@ -60,10 +60,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
         integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
-        </script>
+    </script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
         integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
-        </script>
+    </script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js">
     </script>
 
@@ -181,6 +181,10 @@
 
     <script type="text/x-template" id="component-home">
         <div class="container">
+            
+            <div class="alert alert-light border border-secondary shadow text-dark text-right font-weight-bold" style="font-size:22px">
+                總得分 {{total_point}}
+            </div>
             <table class="table table-dark shadow">
                 <thead>
                   <tr>
@@ -190,7 +194,7 @@
                     <th scope="col">配分</th>
                     <th scope="col" class="text-center">動作</th>
                     <th scope="col" class="text-center" style="width:90px" v-if="$parent.Role=='學生'">已繳交</th>
-                    <th scope="col" class="text-center" style="width:90px" v-if="$parent.Role=='學生'">評分</th>
+                    <th scope="col" class="text-center" style="width:90px" v-if="$parent.Role=='學生'">得分</th>
                     
                   </tr>
                 </thead>
@@ -211,9 +215,6 @@
                 </tbody>
               </table>
 
-            <div class="alert bg-info shadow text-white text-right font-weight-bold" style="font-size:22px">
-                總分 {{total_point}}
-            </div>
             
         </div>
     </script>
@@ -292,7 +293,7 @@
                   <div class="my-2 font-weight-bold">配分</div>
                   <div class="checkbox">
                     <label>
-                        <input type="text" class="form-control" placeholder="獲得分數" v-model="point">
+                        <input type="number" class="form-control" placeholder="獲得分數" v-model="point">
                     </label>
                   </div>   
 
@@ -359,7 +360,7 @@
             </div>
 
             <div v-if="assign.had_revise" class="alert alert-dark text-center mt-3">
-                <div>評分：{{assign.get_point}}</div>
+                <div>得分：{{assign.get_point}}</div>
                 <div>評語：{{assign.suggestion}}</div>
             </div>
 
@@ -372,6 +373,7 @@
     <script type="text/x-template" id="component-revise">
         <div class="container">
             <div class="row mt-3">
+                <div class="col-12 text-right"><button type="button" class="btn btn-light mb-3 border shadow-sm" v-on:click="refresh">重新整理</button></div>
                 <div class="col-12 card shadow-sm border p-4 mb-4" v-for="(value, propertyName, index) in submitlist">
                     <h4 class="card-title border-bottom pb-2 font-weight-bold" style="cursor:pointer;">
                         <i class="fas fa-user-edit mr-2"></i>{{ propertyName }}
@@ -396,7 +398,7 @@
                             </div>
                         </div>
                         <div class="p-2 text-right">
-                            <div class="text-dark">評分：<input type="number" v-model="item.get_point" :placeholder="'配分 ' + item.point" style="width:150px" class="ml-3 border border-dark text-center p-1"></div>
+                            <div class="text-dark">得分：<input type="number" v-model="item.get_point" :placeholder="'配分 ' + item.point" style="width:150px" class="ml-3 border border-dark text-center p-1"></div>
                             <div class="mt-2">評語：<input class="ml-3 border border-dark p-1" v-model="item.suggestion" placeholder="無" /></div>
                             <div class="mt-2">
                                 <span class="text-success" v-if="item.had_revise"><i class="fas fa-check mr-2"></i>已批改</span>
@@ -568,15 +570,23 @@
                 this.getAssigns();
                 var that = this;
 
-                socket.on('assign_release', function (data) {
+                socket.on('broadcast_release_client', function (data) {
                     toastr.info(data);
                     setTimeout(() => {
                         that.getAssigns();
                     }, 1000);
                 });
+
+                socket.on('broadcast_revise_server', function (data) {
+                    toastr.warning(data);
+                    setTimeout(() => {
+                        that.getAssigns();
+                    }, 1000);
+                });
             },
-            destroyed(){
-                socket.off('assign_release');
+            destroyed() {
+                socket.off('broadcast_release_client');
+                socket.off('broadcast_revise_server');
             }
         });
 
@@ -587,7 +597,7 @@
             data() {
                 return {
                     list: [],
-                    point: 0,
+                    point: null,
                     type: '選擇題',
                     content: '',
                     options: [{
@@ -669,11 +679,11 @@
                                 if (item.release) {
                                     toastr.success(`題目${item.sequence} 發布成功。`);
 
-                                    socket.emit('broadcast_release', {
+                                    socket.emit('broadcast_release_server', {
                                         'message': "題目 " + item.sequence + "  可以開始作答。"
                                     });
                                 } else {
-                                    socket.emit('broadcast_release', {
+                                    socket.emit('broadcast_release_server', {
                                         'message': "題目 " + item.sequence + "  已被取消作答。"
                                     });
                                 }
@@ -717,6 +727,9 @@
                 }
             },
             methods: {
+                refresh: function () {
+                    this.getSubmitList();
+                },
                 revise: function (assign) {
                     $.ajax({
                         url: window.origin + '/revise',
@@ -734,6 +747,9 @@
                             if (res.success) {
                                 assign.had_revise = true;
                                 toastr.success(`批改成功。`);
+                                socket.emit('broadcast_release_server', {
+                                    'message': "題目 " + assign.sequence + "  已批改完成。"
+                                });
                             } else {
                                 alert('error');
                             }
@@ -742,25 +758,28 @@
 
                         }
                     });
+                },
+                getSubmitList() {
+                    var that = this;
+                    $.ajax({
+                        url: window.origin + '/submitlist',
+                        type: "get",
+                        data: {
+                            roomid: that.$parent.RoomID
+                        },
+                        dataType: "json",
+                        success: function (res) {
+
+                            that.submitlist = res;
+                        },
+                        error: function (xhr, status, error) {
+                            console.log(error)
+                        }
+                    })
                 }
             },
             mounted() {
-                var that = this;
-                $.ajax({
-                    url: window.origin + '/submitlist',
-                    type: "get",
-                    data: {
-                        roomid: that.$parent.RoomID
-                    },
-                    dataType: "json",
-                    success: function (res) {
-
-                        that.submitlist = res;
-                    },
-                    error: function (xhr, status, error) {
-                        console.log(error)
-                    }
-                })
+                this.getSubmitList();
             }
         });
 
@@ -914,33 +933,33 @@
         // `Vue.extend()`, or just a component options object.
         // We'll talk about nested routes later.
         const routes = [{
-            path: '/',
-            component: join
-        },
-        {
-            path: '/home',
-            components: {
-                default: Home
+                path: '/',
+                component: join
+            },
+            {
+                path: '/home',
+                components: {
+                    default: Home
+                }
+            },
+            {
+                path: '/assign',
+                components: {
+                    default: Assign
+                }
+            },
+            {
+                path: '/revise',
+                components: {
+                    default: Revise
+                }
+            },
+            {
+                path: '/answer',
+                components: {
+                    default: Answer
+                }
             }
-        },
-        {
-            path: '/assign',
-            components: {
-                default: Assign
-            }
-        },
-        {
-            path: '/revise',
-            components: {
-                default: Revise
-            }
-        },
-        {
-            path: '/answer',
-            components: {
-                default: Answer
-            }
-        }
         ]
 
         // 3. Create the router instance and pass the `routes` option
@@ -988,7 +1007,7 @@
                     toastr.info(data);
                 });
             },
-            destroyed(){
+            destroyed() {
                 socket.off('message');
             },
             watch: {
