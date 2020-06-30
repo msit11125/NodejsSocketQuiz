@@ -20,16 +20,11 @@
     {
       "id": "487CD973",
       "room_name": "課堂臨時測驗",
-      "stulist": [],
+      "stulist": [
+        "123f"
+      ],
       "creator": "teacher123",
       "create_time": "2020-06-29T13:44:36.333Z"
-    },
-    {
-      "id": "D4C46016",
-      "room_name": "小房間",
-      "stulist": [],
-      "creator": "teacher0112",
-      "create_time": "2020-06-29T13:51:01.390Z"
     }
   ],
   "assigns": [

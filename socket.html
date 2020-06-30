@@ -35,6 +35,14 @@
             margin-right: 10px !important;
         }
 
+        .toast {
+            right: 2%;
+            bottom: 2%;
+            position: fixed;
+            z-index: 9999;
+            display: none;
+        }
+
         .btn,
         input,
         textarea,
@@ -52,10 +60,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
         integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
-    </script>
+        </script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
         integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
-    </script>
+        </script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js">
     </script>
 
@@ -388,7 +396,7 @@
                             </div>
                         </div>
                         <div class="p-2 text-right">
-                            <div class="text-dark">評分：<input type="number" v-model="item.get_point" :placeholder="'本題配分 ' + item.point" style="width:150px" class="ml-3 border border-dark text-center p-1"></div>
+                            <div class="text-dark">評分：<input type="number" v-model="item.get_point" :placeholder="'配分 ' + item.point" style="width:150px" class="ml-3 border border-dark text-center p-1"></div>
                             <div class="mt-2">評語：<input class="ml-3 border border-dark p-1" v-model="item.suggestion" placeholder="無" /></div>
                             <div class="mt-2">
                                 <span class="text-success" v-if="item.had_revise"><i class="fas fa-check mr-2"></i>已批改</span>
@@ -566,6 +574,9 @@
                         that.getAssigns();
                     }, 1000);
                 });
+            },
+            destroyed(){
+                socket.off('assign_release');
             }
         });
 
@@ -903,33 +914,33 @@
         // `Vue.extend()`, or just a component options object.
         // We'll talk about nested routes later.
         const routes = [{
-                path: '/',
-                component: join
-            },
-            {
-                path: '/home',
-                components: {
-                    default: Home
-                }
-            },
-            {
-                path: '/assign',
-                components: {
-                    default: Assign
-                }
-            },
-            {
-                path: '/revise',
-                components: {
-                    default: Revise
-                }
-            },
-            {
-                path: '/answer',
-                components: {
-                    default: Answer
-                }
+            path: '/',
+            component: join
+        },
+        {
+            path: '/home',
+            components: {
+                default: Home
             }
+        },
+        {
+            path: '/assign',
+            components: {
+                default: Assign
+            }
+        },
+        {
+            path: '/revise',
+            components: {
+                default: Revise
+            }
+        },
+        {
+            path: '/answer',
+            components: {
+                default: Answer
+            }
+        }
         ]
 
         // 3. Create the router instance and pass the `routes` option
@@ -977,7 +988,9 @@
                     toastr.info(data);
                 });
             },
-
+            destroyed(){
+                socket.off('message');
+            },
             watch: {
                 $route(to, from) {
 
