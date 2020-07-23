@@ -51,6 +51,9 @@
         }
     </style>
 
+
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://unpkg.com/vue-router@3.3.4/dist/vue-router.js"></script>
@@ -60,10 +63,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
         integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
-    </script>
+        </script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
         integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous">
-    </script>
+        </script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js">
     </script>
 
@@ -412,7 +415,7 @@
         </div>
     </script>
 
-    <script>
+    <script type="text/babel">
         // globals var
         var socket = io.connect();
         Vue.filter('formatDate', function (value) {
@@ -444,7 +447,7 @@
                         return;
                     }
                     $.ajax({
-                        url: window.origin + '/join',
+                        url: window.location.origin + '/join',
                         type: "post",
                         data: JSON.stringify({
                             "studentid": that.studentID,
@@ -478,6 +481,7 @@
                         },
                         error: function (xhr, status, error) {
                             console.log(error)
+                            console.log(xhr)
                         }
                     });
 
@@ -493,7 +497,7 @@
                         return;
                     }
                     $.ajax({
-                        url: window.origin + '/newroom',
+                        url: window.location.origin + '/newroom',
                         type: "post",
                         data: JSON.stringify({
                             "creator": that.creatorName,
@@ -543,7 +547,7 @@
                 getAssigns: function () {
                     var that = this;
                     $.ajax({
-                        url: window.origin + '/assigns',
+                        url: window.location.origin + '/assigns',
                         type: "get",
                         data: {
                             roomid: that.$parent.RoomID,
@@ -615,7 +619,7 @@
                 new_assigns: function () {
                     var that = this;
                     $.ajax({
-                        url: window.origin + '/new_assigns',
+                        url: window.location.origin + '/new_assigns',
                         type: "post",
                         data: JSON.stringify({
                             "roomid": that.$parent.RoomID,
@@ -665,7 +669,7 @@
                     item.release = !item.release;
                     var that = this;
                     $.ajax({
-                        url: window.origin + '/release_assigns',
+                        url: window.location.origin + '/release_assigns',
                         type: "post",
                         data: JSON.stringify({
                             "roomid": that.$parent.RoomID,
@@ -699,7 +703,7 @@
                 getAssignsAll: function () {
                     var that = this;
                     $.ajax({
-                        url: window.origin + '/assigns_all',
+                        url: window.location.origin + '/assigns_all',
                         type: "get",
                         data: {
                             roomid: that.$parent.RoomID
@@ -732,7 +736,7 @@
                 },
                 revise: function (assign) {
                     $.ajax({
-                        url: window.origin + '/revise',
+                        url: window.location.origin + '/revise',
                         type: "post",
                         data: JSON.stringify({
                             "studentid": assign.studentid,
@@ -762,7 +766,7 @@
                 getSubmitList() {
                     var that = this;
                     $.ajax({
-                        url: window.origin + '/submitlist',
+                        url: window.location.origin + '/submitlist',
                         type: "get",
                         data: {
                             roomid: that.$parent.RoomID
@@ -863,7 +867,7 @@
                             break;
                     }
                     $.ajax({
-                        url: window.origin + '/submitanswer',
+                        url: window.location.origin + '/submitanswer',
                         type: "post",
                         data: JSON.stringify({
                             "studentid": app.StudentId,
@@ -896,7 +900,7 @@
                 this.initCanvas();
 
                 $.ajax({
-                    url: window.origin + '/assignBySeq',
+                    url: window.location.origin + '/assignBySeq',
                     type: "get",
                     data: {
                         studentid: that.$parent.StudentId,
@@ -933,33 +937,33 @@
         // `Vue.extend()`, or just a component options object.
         // We'll talk about nested routes later.
         const routes = [{
-                path: '/',
-                component: join
-            },
-            {
-                path: '/home',
-                components: {
-                    default: Home
-                }
-            },
-            {
-                path: '/assign',
-                components: {
-                    default: Assign
-                }
-            },
-            {
-                path: '/revise',
-                components: {
-                    default: Revise
-                }
-            },
-            {
-                path: '/answer',
-                components: {
-                    default: Answer
-                }
+            path: '/',
+            component: join
+        },
+        {
+            path: '/home',
+            components: {
+                default: Home
             }
+        },
+        {
+            path: '/assign',
+            components: {
+                default: Assign
+            }
+        },
+        {
+            path: '/revise',
+            components: {
+                default: Revise
+            }
+        },
+        {
+            path: '/answer',
+            components: {
+                default: Answer
+            }
+        }
         ]
 
         // 3. Create the router instance and pass the `routes` option
